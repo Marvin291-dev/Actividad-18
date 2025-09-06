@@ -1,48 +1,103 @@
 import tkinter as tk
+from tkinter import messagebox
 
-class
 
 class Bandas:
     def __init__(self):
-        self.ventana = tk.Tk()
-        self.ventana.title("Banda en Quetzaltenango")
-        self.ventana.geometry("500x350")
-
-        self.menu()
+        #self.concurso = Concurso()
+        self.ventana_principal = tk.Tk()
+        self.ventana_principal.title("Concurso de Bandas - Quetzaltenango")
+        self.ventana_principal.geometry("500x300")
 
         tk.Label(
-            self.ventana,
-            text = "Organizacion de bandas para el concurso del\ndesfile del 14 de septiembre",
-            font = ("Arial", 15, "bold"),
+            self.ventana_principal,
+            text = "Sistema de Inscripción y Evaluación de Bandas Escolares\nConcurso 14 de Septiembre - Quetzaltenango",
+            font = ("Arial", 12),
             justify = "center",
-        ).pack(pady = 50)
+        ).pack(pady = 20)
+        opciones = ["Inscribir Banda", "Registrar Puntajes", "Listar Bandas", "Ver Ranking"]
+        self.opcion = tk.StringVar()
+        self.opcion.set(opciones[0])
+        tk.OptionMenu(self.ventana_principal, self.opcion, *opciones).pack(pady = 20)
 
-        self.ventana.mainloop()
+        tk.Button(self.ventana_principal, text = "Aceptar", command = self.ejecutaropcion, bg = "blue", fg = "white").pack(pady = 20)
 
-    def menu(self):
-        barra = tk.Menu(self.ventana)
-        opcion = tk.Menu(barra, tearoff=0)
-        opcion.add_command(label = "Inscribir bandas por categoría", command = self.inscribirporcategoria)
-        opcion.add_command(label = "Registrar puntajes por criterios", command = self.Registrarpuntajesporcriterios)
-        opcion.add_command(label = "Listar bandas inscritas", command = self.Listarbandasinscritas)
-        opcion.add_command(label = "Generar un ranking final", command = self.Generarunrankingfinal)
-        opcion.add_separator()
-        opcion.add_command(label = "Salir", command = self.ventana.quit)
-        barra.add_cascade(label = "Opción", menu = opcion)
-        self.ventana.config(menu = barra)
+        self.ventana_principal.mainloop()
 
-    def inscribirporcategoria(self):
-        print("Inscribiendo bandas por criterios")
-        tk.Toplevel(self.ventana).title("Inscribiendo bandas por criterios")
+    def ejecutaropcion(self):
+        opcciones_bandas = self.opcion.get()
+        if opcciones_bandas == "Inscribir Banda":
+            self.formularioinscripcion()
+        elif opcciones_bandas == "Registrar Puntajes":
+            self.evaluacion()
+        elif opcciones_bandas == "Listar Bandas":
+            self.mostrarlistado()
+        elif opcciones_bandas == "Ver Ranking":
+            self.mostrarranking()
 
-    def Registrarpuntajesporcriterios(self):
-        print("Registrando puntajes por criterios")
+    def formularioinscripcion(self):
+        ventana = tk.Toplevel(self.ventana_principal)
+        ventana.title("Inscripcion de Bandas")
+        ventana.geometry("400x300")
 
-    def Listarbandasinscritas(self):
-        print("Listando bandas inscritas")
+        tk.Label(ventana, text = "Nombre de la Banda: ").pack()
+        nombre = tk.Entry(ventana)
+        nombre.pack()
 
-    def Generarunrankingfinal(self):
-        print("Generando ranking final")
+        tk.Label(ventana, text = "Institucion: ").pack()
+        institucion = tk.Entry(ventana)
+        institucion.pack()
+
+        tk.Label(ventana, text = "Categoría: ").pack()
+        categoria = tk.StringVar(ventana)
+        categoria.set("Primaria")
+        tk.OptionMenu(ventana, categoria, "Primaria", "Basico ", "Diversificado").pack()
+
+        def guardar():
+            try:
+                banda = Bandaescolar(nombre.get(), institucion.get())
+                banda.set_categoria(categoria.get())
+                self.concurso.inscribirbanda(banda)
+                messagebox.showinfo("Exito", "Banda Inscribibida correctamente")
+                ventana.destroy()
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
+        tk.Button(ventana, text = "Guardar", command = guardar, bg = "green", fg = "white").pack(pady = 20)
+
+    def evaluacion(self):
+        ventana = tk.Toplevel(self.ventana_principal)
+        ventana.title("Registrar puntajes")
+        ventana.geometry("400x300")
+
+        tk.Label(ventana, text = "Nombre de la banda: ").pack()
+        nombre = tk.Entry(ventana)
+        nombre.pack()
+
+        criterios = ["ritmo", "Uniformidad", "Coreografía", "Alineación", "Puntualidad"]
+        entredas = {}
+
+        for criterio in criterios:
+            tk.Label(ventana, text = f"{criterio.capitalize()}: ").pack()
+            entrada = tk.Entry(ventana)
+            entrada.pack()
+            entredas[criterio] = entrada
+
+        def guardar():
+            try:
+                puntajes = {c: int(e.get()) for c, e in entredas.items()}
+                self.concurso.registrarevaluacion(nombre.get(), puntajes)
+                messagebox.showinfo("Exito", "Puntajes registrada correctamente")
+                ventana.destroy()
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
+        tk.Button(ventana, text = "Guardar", command= guardar, bg = "green", fg = "white").pack(pady = 20)
+
+    def mostrarlistado(self):
+        ventana = tk.Toplevel(self.ventana_principal)
+        ventana.title("Listar puntajes")
+        ventana.geometry("400x300")
 
 if __name__ == "__main__":
-    banda = Bandas()
+    Bandas()
