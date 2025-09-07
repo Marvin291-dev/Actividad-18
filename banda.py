@@ -55,8 +55,7 @@ class Bandas:
 
         def guardar():
             try:
-                banda = BandaEscolares(nombre.get(), institucion.get())
-                banda.set_categoria(categoria.get())
+                banda = BandaEscolares(nombre.get(), institucion.get(), categoria.get())
                 self.concurso.inscribirbanda(banda)
                 messagebox.showinfo("Exito", "Banda Inscribibida correctamente")
                 ventana.destroy()
@@ -101,7 +100,7 @@ class Bandas:
 
         listado = self.concurso.listarbandas()
         for infor in listado:
-            tk.Label(ventana, text = f"infor", justify = "left").pack(anchor = "w")
+            tk.Label(ventana, text = infor, justify = "left").pack(anchor = "w")
 
     def mostrarranking(self):
         ventana = tk.Toplevel(self.ventana_principal)
@@ -125,7 +124,7 @@ class BandaEscolares:
         if set(puntajes.keys()) != set(criterios_validos):
             raise ValueError("Criterios incompletos o incorrectos")
         for criterio, valor in puntajes.items():
-            if not isinstance(valor, (int, float)) or not (0 <= valor <= 1):
+            if not isinstance(valor, (int, float)) or not (0 <= valor <= 10):
                 raise ValueError(f"Puntajes fuera de rango en {criterio}")
         self.puntajes = puntajes
 
@@ -136,7 +135,7 @@ class BandaEscolares:
         return self.get_total() / len(self.puntajes) if self.puntajes else 0
 
     def mostrarinformacion(self):
-        info = f"Banda: {self.categoria} | Institucion: {self.institucion} | Categoria: {self.categoria}"
+        info = f"Banda: {self.nombre} | Institucion: {self.institucion} | Categoria: {self.categoria}"
         if self.puntajes:
             info += f" | Total: {self.get_total()}"
         return info
@@ -171,7 +170,7 @@ class Concurso:
             for banda in self.bandas.values():
                 linea = f"{banda.nombre} | {banda.institucion} | {banda.categoria}"
                 if banda.puntajes:
-                    puntajes_str = ",".join((f"{k} : {v}" for k, v in banda.puntajes.items()))
+                    puntajes_str = ",".join(f"{k} : {v}" for k, v in banda.puntajes.items())
                     linea += f" | {puntajes_str}"
                 archivo.write(linea + "\n")
 
@@ -185,10 +184,11 @@ class Concurso:
                     banda = BandaEscolares(partes[0], partes[1],partes[2])
                     if len(partes) == 4:
                         puntajes = {}
-                        for par in partes[3].split(":"):
-                            crit, valor = par.split(",")
+                        for par in partes[3].split(","):
+                            crit, valor = par.split(":")
                             puntajes[crit] = int(valor)
                         banda.registrarpuntajes(puntajes)
                     self.bandas[banda.nombre] = banda
+
 if __name__ == "__main__":
     Bandas()

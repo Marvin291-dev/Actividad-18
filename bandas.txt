@@ -1,0 +1,4 @@
+los niños    |    shekina    |    Primaria
+las niñas   |   shekina   |   Diversificado
+los adolescentes  |  patria  |  Basico
+los padres | jose | Primaria
