@@ -1,10 +1,10 @@
 import tkinter as tk
 from tkinter import messagebox
-
+import os
 
 class Bandas:
     def __init__(self):
-        #self.concurso = Concurso()
+        self.concurso = Concurso()
         self.ventana_principal = tk.Tk()
         self.ventana_principal.title("Concurso de Bandas - Quetzaltenango")
         self.ventana_principal.geometry("500x300")
@@ -55,7 +55,7 @@ class Bandas:
 
         def guardar():
             try:
-                banda = Bandaescolar(nombre.get(), institucion.get())
+                banda = BandaEscolares(nombre.get(), institucion.get())
                 banda.set_categoria(categoria.get())
                 self.concurso.inscribirbanda(banda)
                 messagebox.showinfo("Exito", "Banda Inscribibida correctamente")
@@ -99,5 +99,96 @@ class Bandas:
         ventana.title("Listar puntajes")
         ventana.geometry("400x300")
 
+        listado = self.concurso.listarbandas()
+        for infor in listado:
+            tk.Label(ventana, text = f"infor", justify = "left").pack(anchor = "w")
+
+    def mostrarranking(self):
+        ventana = tk.Toplevel(self.ventana_principal)
+        ventana.title("Ranking puntajes")
+        ventana.geometry("400x300")
+
+        ranking = self.concurso.ranking()
+        tk.Label(ventana, text = f"Ranking de Bandas", font = ("Arial", 12, "bold")).pack(pady = 20)
+        for i, banda in enumerate(ranking, start = 1):
+            tk.Label(ventana, text = f" {i}. {banda.mostrarinformacion()},", justify = "left").pack(anchor = "w")
+
+class BandaEscolares:
+    def __init__(self, nombre, institucion, categoria):
+        self.nombre = nombre
+        self.institucion = institucion
+        self.categoria = categoria
+        self.puntajes = {}
+
+    def registrarpuntajes(self, puntajes):
+        criterios_validos = ["ritmo", "uniformidad", "coreografía", "alineación", "puntualidad"]
+        if set(puntajes.keys()) != set(criterios_validos):
+            raise ValueError("Criterios incompletos o incorrectos")
+        for criterio, valor in puntajes.items():
+            if not isinstance(valor, (int, float)) or not (0 <= valor <= 1):
+                raise ValueError(f"Puntajes fuera de rango en {criterio}")
+        self.puntajes = puntajes
+
+    def get_total(self):
+        return sum(self.puntajes.values()) if self.puntajes else 0
+
+    def get_promedio(self):
+        return self.get_total() / len(self.puntajes) if self.puntajes else 0
+
+    def mostrarinformacion(self):
+        info = f"Banda: {self.categoria} | Institucion: {self.institucion} | Categoria: {self.categoria}"
+        if self.puntajes:
+            info += f" | Total: {self.get_total()}"
+        return info
+
+class Concurso:
+    def __init__(self):
+        self.bandas = {}
+        self.archivos = "bandas.txt"
+        self.cargardesdearchivo()
+
+    def inscribirbanda(self, banda):
+        if banda.nombre in self.bandas:
+            raise ValueError("Ya existe una banda con ese nombre")
+        self.bandas[banda.nombre] = banda
+        self.guardarenarchivos()
+
+    def registrarevaluacion(self, nombrebanda, puntajes):
+        if nombrebanda not in self.bandas:
+            raise ValueError("Ya no existe una banda con ese nombre")
+        self.bandas[nombrebanda].registrarpuntajes(puntajes)
+        self.guardarenarchivos()
+
+    def listarbandas(self):
+        return [b.mostrarinformacion() for b in self.bandas.values()]
+
+    def ranking(self):
+        evaluaciones = [b for b in self.bandas.values() if b.puntajes]
+        return sorted(evaluaciones, key = lambda b: (b.get_total(), b.get_promedio), reverse = True)
+
+    def guardarenarchivos(self):
+        with open(self.archivos, "w", encoding = "utf-8") as archivo:
+            for banda in self.bandas.values():
+                linea = f"{banda.nombre} | {banda.institucion} | {banda.categoria}"
+                if banda.puntajes:
+                    puntajes_str = ",".join((f"{k} : {v}" for k, v in banda.puntajes.items()))
+                    linea += f" | {puntajes_str}"
+                archivo.write(linea + "\n")
+
+    def cargardesdearchivo(self):
+        if not os.path.exists(self.archivos):
+            return
+        with open(self.archivos, "r", encoding = "utf-8") as archivo:
+            for linea in archivo:
+                partes = linea.strip().split("|")
+                if len(partes) >= 3:
+                    banda = BandaEscolares(partes[0], partes[1],partes[2])
+                    if len(partes) == 4:
+                        puntajes = {}
+                        for par in partes[3].split(":"):
+                            crit, valor = par.split(",")
+                            puntajes[crit] = int(valor)
+                        banda.registrarpuntajes(puntajes)
+                    self.bandas[banda.nombre] = banda
 if __name__ == "__main__":
     Bandas()
